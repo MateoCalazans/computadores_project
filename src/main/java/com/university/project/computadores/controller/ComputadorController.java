@@ -8,7 +8,6 @@ import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -243,73 +242,5 @@ public class ComputadorController {
         int indice = random.nextInt(imagens.size());
         
         return imagens.get(indice);
-    }
-    
-    /**
-     * Lista todos os computadores em formato JSON.
-     * Rota: /api/computadores (GET)
-     */
-    @GetMapping("/api/computadores")
-    @ResponseBody
-    public List<Computador> listarComputadoresJson() {
-        return computadorRepository.findAll();
-    }
-    
-    /**
-     * Lista todos os computadores ativos em formato JSON.
-     * Rota: /api/computadores/ativos (GET)
-     */
-    @GetMapping("/api/computadores/ativos")
-    @ResponseBody
-    public List<Computador> listarComputadoresAtivosJson() {
-        return computadorRepository.findByIsDeletedIsNull();
-    }
-
-    /**
-     * Cria um novo computador via API.
-     * Rota: /api/computadores (POST)
-     */
-    @PostMapping("/api/computadores")
-    @ResponseBody
-    public ResponseEntity<?> criarComputadorJson(@Valid @RequestBody Computador computador) {
-        try {
-            // Seleciona uma imagem aleatória
-            computador.setImageUrl(selecionarImagemAleatoria());
-            
-            // Salva o computador
-            Computador computadorSalvo = computadorRepository.save(computador);
-            
-            return ResponseEntity.ok(computadorSalvo);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Erro ao criar computador: " + e.getMessage());
-        }
-    }
-    
-    /**
-     * Atualiza um computador existente via API.
-     * Rota: /api/computadores/{id} (PUT)
-     */
-    @PutMapping("/api/computadores/{id}")
-    @ResponseBody
-    public ResponseEntity<?> atualizarComputadorJson(@PathVariable Long id, @Valid @RequestBody Computador computador) {
-        try {
-            // Verifica se o computador existe
-            if (!computadorRepository.existsById(id)) {
-                return ResponseEntity.notFound().build();
-            }
-            
-            // Define o ID e seleciona uma imagem aleatória se necessário
-            computador.setId(id);
-            if (computador.getImageUrl() == null || computador.getImageUrl().isEmpty()) {
-                computador.setImageUrl(selecionarImagemAleatoria());
-            }
-            
-            // Salva o computador
-            Computador computadorSalvo = computadorRepository.save(computador);
-            
-            return ResponseEntity.ok(computadorSalvo);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Erro ao atualizar computador: " + e.getMessage());
-        }
     }
 }
