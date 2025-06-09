@@ -8,6 +8,7 @@ import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -152,7 +153,7 @@ public class ComputadorController {
             redirectAttributes.addFlashAttribute("tipoMensagem", "success");
             
             System.out.println("=== FIM DO PROCESSO DE SALVAMENTO ===");
-            return "redirect:/index";
+            return "redirect:/admin";
         } catch (Exception e) {
             System.out.println("=== ERRO AO SALVAR COMPUTADOR ===");
             System.out.println("Tipo do erro: " + e.getClass().getName());
@@ -176,11 +177,11 @@ public class ComputadorController {
         Computador computador = computadorRepository.findById(id)
                 .orElse(null);
         
-        // Se o computador não existir, redireciona para a página admin com mensagem de erro
+        // Se o computador não existir, redireciona para a página index com mensagem de erro
         if (computador == null) {
             redirectAttributes.addFlashAttribute("erro", "Computador não encontrado.");
             redirectAttributes.addFlashAttribute("tipoMensagem", "danger");
-            return "redirect:/admin";
+            return "redirect:/index";
         }
         
         // Realiza o soft delete (define a data atual como valor para isDeleted)
@@ -191,7 +192,7 @@ public class ComputadorController {
         redirectAttributes.addFlashAttribute("mensagem", "Computador removido com sucesso!");
         redirectAttributes.addFlashAttribute("tipoMensagem", "success");
         
-        return "redirect:/admin";
+        return "redirect:/index";
     }
     
     /**
@@ -205,11 +206,11 @@ public class ComputadorController {
         Computador computador = computadorRepository.findById(id)
                 .orElse(null);
         
-        // Se o computador não existir, redireciona para a página admin com mensagem de erro
+        // Se o computador não existir, redireciona para a página index com mensagem de erro
         if (computador == null) {
             redirectAttributes.addFlashAttribute("erro", "Computador não encontrado.");
             redirectAttributes.addFlashAttribute("tipoMensagem", "danger");
-            return "redirect:/admin";
+            return "redirect:/index";
         }
         
         // Restaura o computador (define isDeleted como null)
@@ -220,7 +221,7 @@ public class ComputadorController {
         redirectAttributes.addFlashAttribute("mensagem", "Computador restaurado com sucesso!");
         redirectAttributes.addFlashAttribute("tipoMensagem", "success");
         
-        return "redirect:/admin";
+        return "redirect:/index";
     }
     
     /**
@@ -232,6 +233,10 @@ public class ComputadorController {
         List<String> imagens = new ArrayList<>();
         imagens.add("/images/pc_gamer.jpg");
         imagens.add("/images/laptop_moderno.jpg");
+        imagens.add("/images/desktop_office.jpg");
+        imagens.add("/images/notebook_ultrabook.jpg");
+        imagens.add("/images/workstation.jpg");
+        imagens.add("/images/all_in_one.jpg");
         
         // Seleciona uma imagem aleatória
         Random random = new Random();
@@ -258,5 +263,53 @@ public class ComputadorController {
     @ResponseBody
     public List<Computador> listarComputadoresAtivosJson() {
         return computadorRepository.findByIsDeletedIsNull();
+    }
+
+    /**
+     * Cria um novo computador via API.
+     * Rota: /api/computadores (POST)
+     */
+    @PostMapping("/api/computadores")
+    @ResponseBody
+    public ResponseEntity<?> criarComputadorJson(@Valid @RequestBody Computador computador) {
+        try {
+            // Seleciona uma imagem aleatória
+            computador.setImageUrl(selecionarImagemAleatoria());
+            
+            // Salva o computador
+            Computador computadorSalvo = computadorRepository.save(computador);
+            
+            return ResponseEntity.ok(computadorSalvo);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erro ao criar computador: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Atualiza um computador existente via API.
+     * Rota: /api/computadores/{id} (PUT)
+     */
+    @PutMapping("/api/computadores/{id}")
+    @ResponseBody
+    public ResponseEntity<?> atualizarComputadorJson(@PathVariable Long id, @Valid @RequestBody Computador computador) {
+        try {
+            // Verifica se o computador existe
+            if (!computadorRepository.existsById(id)) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            // Define o ID e seleciona uma imagem aleatória se necessário
+            computador.setId(id);
+            if (computador.getImageUrl() == null || computador.getImageUrl().isEmpty()) {
+                computador.setImageUrl(selecionarImagemAleatoria());
+            }
+            
+            // Salva o computador
+            Computador computadorSalvo = computadorRepository.save(computador);
+            
+            return ResponseEntity.ok(computadorSalvo);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erro ao atualizar computador: " + e.getMessage());
+        }
     }
 }

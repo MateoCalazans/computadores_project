@@ -3,6 +3,7 @@ package com.university.project.computadores.config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -31,14 +32,23 @@ public class SecurityConfig {
     }
 
     /**
-     * Configura um usuário administrador padrão para testes.
+     * Configura o provedor de autenticação.
+     */
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder());
+        return authProvider;
+    }
+
+    /**
+     * Configura o gerenciador de autenticação.
      */
     @Autowired
     public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-        auth.inMemoryAuthentication()
-            .withUser("admin")
-            .password(passwordEncoder().encode("admin"))
-            .roles("ADMIN");
+        auth.userDetailsService(userDetailsService)
+            .passwordEncoder(passwordEncoder());
     }
 
     /**
@@ -50,7 +60,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         // Páginas públicas
                         .requestMatchers("/", "/index", "/login", "/cadusuario", "/salvarusuario", 
-                                       "/css/**", "/js/**", "/images/**", "/h2-console/**").permitAll()
+                                       "/css/**", "/js/**", "/images/**", "/h2-console/**", "/error", "/.well-known/**").permitAll()
 
                         // Páginas restritas a administradores
                         .requestMatchers("/admin", "/cadastro", "/salvar", "/editar", "/deletar", "/restaurar").hasRole("ADMIN")
